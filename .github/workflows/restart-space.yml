@@ -2,7 +2,7 @@ name: Restart Hugging Face Space
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # 07:00 UK durante horario de verano
+    - cron: "*/30 * * * *"  # cada 30 minutos revisa el estado del Space
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Install Hugging Face Hub
         run: pip install huggingface_hub
 
-      - name: Restart Space
+      - name: Restart Space if down
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -30,27 +30,31 @@ jobs:
           token = os.environ.get("HF_TOKEN")
           if not token:
               print("ERROR: el secreto HF_TOKEN no está configurado en el repo.")
-              print("Ve a Settings -> Secrets and variables -> Actions -> New repository secret")
               sys.exit(1)
 
           api = HfApi(token=token)
+          repo_id = "ferferefer/Glaucoma-EyeFundus-ML"
 
-          # Verifica que el token es válido y de quién es
+          # Estados que consideramos "arriba y funcionando"
+          HEALTHY = {"RUNNING", "RUNNING_BUILDING", "BUILDING", "RUNNING_APP_STARTING", "APP_STARTING"}
+
           try:
-              who = api.whoami()
-              print(f"Token válido. Usuario: {who.get('name')}")
+              runtime = api.get_space_runtime(repo_id)
+              stage = runtime.stage
+              print(f"Estado actual del Space: {stage}")
           except Exception as e:
-              print(f"ERROR: el token no es válido o expiró: {e}")
+              print(f"ERROR al consultar el estado de {repo_id}: {e}")
               sys.exit(1)
 
-          repo_id = "ferferefer/Glaucoma-EyeFundus-ML"
+          if stage in HEALTHY:
+              print("El Space está funcionando. No hace falta reiniciar.")
+              sys.exit(0)
+
+          print(f"El Space está caído/dormido ({stage}). Reiniciando...")
           try:
               api.restart_space(repo_id=repo_id)
               print(f"Space {repo_id} reiniciado correctamente")
           except Exception as e:
               print(f"ERROR al reiniciar {repo_id}: {e}")
-              print("Revisa que: (1) el repo_id sea correcto, "
-                    "(2) el token tenga permiso de WRITE, "
-                    "(3) el token pertenezca a una cuenta con acceso al Space.")
               sys.exit(1)
           PY
