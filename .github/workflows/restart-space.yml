@@ -1,0 +1,27 @@
+name: Restart Hugging Face Space
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # 07:00 UK durante horario de verano
+  workflow_dispatch:
+
+jobs:
+  restart-space:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Hugging Face Hub
+        run: pip install huggingface_hub
+
+      - name: Restart Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.restart_space(repo_id="ferferefer/Glaucoma-EyeFundus-ML")
+          print("Space restarted successfully")
+          PY
