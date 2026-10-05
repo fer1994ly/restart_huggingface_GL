@@ -65,15 +65,21 @@ def test_main_requires_space_id(monkeypatch):
     assert main() == 1
 
 
-def test_workflow_watches_both_spaces_with_the_script():
+def test_workflow_watches_both_spaces_sequentially_with_one_job():
     workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
-    job = workflow["jobs"]["restart-space"]
+    assert list(workflow["jobs"]) == ["restart-spaces"]
+    job = workflow["jobs"]["restart-spaces"]
 
-    assert set(job["strategy"]["matrix"]["space"]) == EXPECTED_SPACES
-    assert job["strategy"]["fail-fast"] is False
+    assert "strategy" not in job
 
     steps = job["steps"]
     assert any(s.get("uses", "").startswith("actions/checkout") for s in steps)
     run_step = next(s for s in steps if "keep_space_awake.py" in s.get("run", ""))
-    assert run_step["env"]["SPACE_ID"] == "${{ matrix.space }}"
     assert run_step["env"]["HF_TOKEN"] == "${{ secrets.HF_TOKEN }}"
+
+    command = run_step["run"]
+    glaucoma = "ferferefer/Glaucoma-EyeFundus-ML"
+    retinal_age = "ferferefer/retinal_age"
+    assert set(space for space in EXPECTED_SPACES if space in command) == EXPECTED_SPACES
+    assert command.index(glaucoma) < command.index(retinal_age)
+    assert 'exit "$status"' in command
