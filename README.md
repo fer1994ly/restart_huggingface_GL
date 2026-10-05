@@ -21,3 +21,12 @@ Antes de que funcione, agrega tu token de Hugging Face como secreto en el repo:
 1. Ve a **Settings → Secrets and variables → Actions → New repository secret**.
 2. Nombre: `HF_TOKEN`
 3. Valor: tu token de escritura de https://huggingface.co/settings/tokens
+
+## Tests
+
+```bash
+pip install huggingface_hub pytest pyyaml
+python -m pytest -q
+```
+
+El workflow ejecuta los tests antes de revisar cada Space.

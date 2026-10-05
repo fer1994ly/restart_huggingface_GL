@@ -2,7 +2,7 @@ name: Restart Hugging Face Spaces
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # cada 30 minutos revisa el estado del Space
+    - cron: "*/30 * * * *"  # cada 30 minutos revisa el estado de los Spaces
   workflow_dispatch:
 
 jobs:
@@ -16,52 +16,22 @@ jobs:
           - ferferefer/retinal_age
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Hugging Face Hub
-        run: pip install huggingface_hub
+      - name: Install dependencies
+        run: pip install huggingface_hub pytest pyyaml
+
+      - name: Run tests
+        run: python -m pytest -q
 
       - name: Restart Space if down
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           SPACE_ID: ${{ matrix.space }}
-        run: |
-          python - <<'PY'
-          import os
-          import sys
-          from huggingface_hub import HfApi
-
-          token = os.environ.get("HF_TOKEN")
-          if not token:
-              print("ERROR: el secreto HF_TOKEN no está configurado en el repo.")
-              sys.exit(1)
-
-          api = HfApi(token=token)
-          repo_id = os.environ["SPACE_ID"]
-
-          # Estados que consideramos "arriba y funcionando"
-          HEALTHY = {"RUNNING", "RUNNING_BUILDING", "BUILDING", "RUNNING_APP_STARTING", "APP_STARTING"}
-
-          try:
-              runtime = api.get_space_runtime(repo_id)
-              stage = runtime.stage
-              print(f"Estado actual del Space: {stage}")
-          except Exception as e:
-              print(f"ERROR al consultar el estado de {repo_id}: {e}")
-              sys.exit(1)
-
-          if stage in HEALTHY:
-              print("El Space está funcionando. No hace falta reiniciar.")
-              sys.exit(0)
-
-          print(f"El Space está caído/dormido ({stage}). Reiniciando...")
-          try:
-              api.restart_space(repo_id=repo_id)
-              print(f"Space {repo_id} reiniciado correctamente")
-          except Exception as e:
-              print(f"ERROR al reiniciar {repo_id}: {e}")
-              sys.exit(1)
-          PY
+        run: python scripts/keep_space_awake.py
