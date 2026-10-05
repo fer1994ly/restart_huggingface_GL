@@ -6,14 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  restart-space:
+  restart-spaces:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        space:
-          - ferferefer/Glaucoma-EyeFundus-ML
-          - ferferefer/retinal_age
 
     steps:
       - name: Check out repository
@@ -30,8 +24,15 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-      - name: Restart Space if down
+      - name: Check Spaces one by one
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          SPACE_ID: ${{ matrix.space }}
-        run: python scripts/keep_space_awake.py
+        run: |
+          status=0
+          for space_id in \
+            ferferefer/Glaucoma-EyeFundus-ML \
+            ferferefer/retinal_age
+          do
+            SPACE_ID="$space_id" python scripts/keep_space_awake.py || status=1
+          done
+          exit "$status"
