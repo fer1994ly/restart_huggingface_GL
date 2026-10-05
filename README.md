@@ -9,7 +9,7 @@ El workflow [`.github/workflows/restart-space.yml`](.github/workflows/restart-sp
 - **Cada 30 minutos** mediante un cron: consulta el estado de cada Space y lo reinicia solo si está caído o dormido.
 - **Manualmente** desde la pestaña *Actions* (botón *Run workflow*).
 
-Spaces vigilados (matriz del workflow):
+Spaces vigilados, en este orden y dentro de un único job:
 
 - `ferferefer/Glaucoma-EyeFundus-ML`
 - `ferferefer/retinal_age`
@@ -29,4 +29,6 @@ pip install huggingface_hub pytest pyyaml
 python -m pytest -q
 ```
 
-El workflow ejecuta los tests antes de revisar cada Space.
+El workflow ejecuta los tests y después revisa los dos Spaces de forma secuencial
+con un único runner. Si uno falla, intenta revisar el siguiente y marca el job como
+fallido al terminar.
