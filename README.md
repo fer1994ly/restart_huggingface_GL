@@ -1,15 +1,18 @@
 # restart_huggingface
 
-Reinicia automáticamente un Hugging Face Space todos los días usando GitHub Actions.
+Mantiene despiertos varios Hugging Face Spaces usando GitHub Actions.
 
 ## Cómo funciona
 
 El workflow [`.github/workflows/restart-space.yml`](.github/workflows/restart-space.yml) se ejecuta:
 
-- **Todos los días a las 06:00 UTC** (07:00 hora de UK en horario de verano) mediante un cron.
+- **Cada 30 minutos** mediante un cron: consulta el estado de cada Space y lo reinicia solo si está caído o dormido.
 - **Manualmente** desde la pestaña *Actions* (botón *Run workflow*).
 
-Reinicia el Space `ferferefer/Glaucoma-EyeFundus-ML`.
+Spaces vigilados (matriz del workflow):
+
+- `ferferefer/Glaucoma-EyeFundus-ML`
+- `ferferefer/retinal_age`
 
 ## Configuración requerida
 

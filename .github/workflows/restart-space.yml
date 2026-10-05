@@ -1,4 +1,4 @@
-name: Restart Hugging Face Space
+name: Restart Hugging Face Spaces
 
 on:
   schedule:
@@ -8,6 +8,12 @@ on:
 jobs:
   restart-space:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        space:
+          - ferferefer/Glaucoma-EyeFundus-ML
+          - ferferefer/retinal_age
 
     steps:
       - name: Set up Python
@@ -21,6 +27,7 @@ jobs:
       - name: Restart Space if down
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_ID: ${{ matrix.space }}
         run: |
           python - <<'PY'
           import os
@@ -33,7 +40,7 @@ jobs:
               sys.exit(1)
 
           api = HfApi(token=token)
-          repo_id = "ferferefer/Glaucoma-EyeFundus-ML"
+          repo_id = os.environ["SPACE_ID"]
 
           # Estados que consideramos "arriba y funcionando"
           HEALTHY = {"RUNNING", "RUNNING_BUILDING", "BUILDING", "RUNNING_APP_STARTING", "APP_STARTING"}
